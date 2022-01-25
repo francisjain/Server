@@ -1,4 +1,6 @@
 const jwt = require('jsonwebtoken')
+const db = require('./db')
+
 
 users = {
   1000: { acno: 1000, uname: "Neer", password: "1000", balance: 5000, transaction: [] },
@@ -7,18 +9,21 @@ users = {
 }
 
 //register definition
-
 const register = (acno, password, uname) => {
-  if (acno in users) {
-    return {
+  return db.User.findOne({acno}).then(user=>{
+    console.log(user);
+    if(user){
+         return {
       statusCode: 401,
       status: false,
       message: "Account already Exists...Please Login!!!"
     }
-  } else {
-    users[acno] = {
+    } else {
+    const newUser =new db.User ({
       acno, uname, password, balance: 0, transaction: []
-    }
+    })
+    newUser.save()
+    
     // console.log(db);
     return {
       statusCode: 200,
@@ -26,88 +31,91 @@ const register = (acno, password, uname) => {
       message: "Account Successfully Created"
     }
   }
+  })
 }
+
+//---------------------------------without-----conn/syn----!!!
+
+// const register = (acno, password, uname) => {
+//   if (acno in users) {
+//     return {
+//       statusCode: 401,
+//       status: false,
+//       message: "Account already Exists...Please Login!!!"
+//     }
+//   } else {
+//     users[acno] = {
+//       acno, uname, password, balance: 0, transaction: []
+//     }
+//     // console.log(db);
+//     return {
+//       statusCode: 200,
+//       status: true,
+//       message: "Account Successfully Created"
+//     }
+//   }
+// }
+
+//---------------------------------without-----conn/syn----!!!
+
 // login
 const login = (acno, password) => {
-  if (acno in users) {
+  return db.User.findOne({acno, password}).then(user=>{
+    if (user) {
 
-    if (password == users[acno]["password"]) {
-      currentuserName = users[acno]["uname"]
-      currentAcno = acno
-
-      //token generation
-      const token = jwt.sign({
-        currentAcc: acno
-      }, 'supersecretkey123')
-      return {
-        statusCode: 200,
-        status: true,
-        message: "Account login Successfully",
-        currentAcno,
-        currentuserName, token
-      }
-    } else {
+        currentuserName = user.uname
+        currentAcno = acno
+  
+        //token generation
+        const token = jwt.sign({
+          currentAcc: acno
+        }, 'supersecretkey123')
+        
+        return {
+          statusCode: 200,
+          status: true,
+          message: "Account login Successfully",
+          currentAcno,
+          currentuserName, token
+        }
+    }
       return {
         statusCode: 401,
         status: false,
-        message: "Incorrect Password"
+        message: "Invalide credentials"
       }
-    }
-  } else {
-    return {
-      statusCode: 401,
-      status: false,
-      message: "Invalide Account Number"
-    }
-  }
+    
+
+  })
+   
 }
 
 //deposit
 const deposite = (req, acno, password, amt) => {
   var amount = parseInt(amt)
 
-  let db = users
-  if (acno in db) {
-
-
-    if (req.currentAcc != acno) {
-      return {
-        statusCode: 401,
-        status: false,
-        message: "Permission denied"
-      }
-    } 
-
-    
-      if (password == db[acno]["password"]) {
-        db[acno]["balance"] = db[acno]["balance"] + amount
-        db[acno].transaction.push({
+  return db.User.findOne({
+    acno,password
+  }).then(user=>{
+    if(user){
+      user.balance = user.balance + amount
+        user.transaction.push({
           amount: amount,
           type: "CREDIT"
-        })
-        return {
-          statusCode: 200,
-          status: true,
-          message: amount + " is been credited. Your current Balance is " + db[acno]["balance"]
-        }
-
-      } else {
-        return {
-          statusCode: 401,
-          status: false,
-          message: "Incorrect Password"
-        }
-      }
-    
-
-  } else {
+    })
+    user.save()
     return {
-      statusCode: 401,
-      status: false,
-      message: "Invalide Account Number"
+      statusCode: 200,
+          status: true,
+          message: amount + " is been credited. Your current Balance is " + user.balance
     }
   }
-
+  return {
+    statusCode: 401,
+    status: false,
+    message: "Invalide credentials"
+  } 
+  })
 }
 //withdraw
 const withDraw = (acno, password, amt) => {

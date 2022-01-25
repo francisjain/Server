@@ -38,11 +38,13 @@ app.delete('/', (req, res) => {
 app.patch('/', (req, res) => {
     res.send("PATCH REQUEST!!")
 })
+
 //middleware - application spedific
 // app.use((req,res,next)=>{
 //     console.log("Application specific middleware");
 //     next()
 // })
+
 //middleware - application spedific - another way
 const loginMiddleware = ((req, res, next) => {
     console.log("Application specific middleware");
@@ -68,20 +70,26 @@ const jwtMiddleware = (req, res, next) => {
 //Register API
 app.post('/register', (req, res) => {
     console.log(req.body.acno);
-    const result = dataService.register(req.body.acno, req.body.password, req.body.uname)
-    res.status(result.statusCode).json(result)
+    dataService.register(req.body.acno, req.body.password, req.body.uname)
+    .then(result=>{
+        res.status(result.statusCode).json(result)  
+    })
 })
 
 app.post('/login', (req, res) => {
     console.log(req.body.acno);
-    const result = dataService.login(req.body.acno, req.body.password)
-    res.status(result.statusCode).json(result)
+    dataService.login(req.body.acno, req.body.password)
+    .then(result=>{
+        res.status(result.statusCode).json(result)
+    })
 })
 
 app.post('/deposite', jwtMiddleware, (req, res) => {
     console.log(req.body.acno);
-    const result = dataService.deposite(req,req.body.acno, req.body.password, req.body.amt)
-    res.status(result.statusCode).json(result)
+    dataService.deposite(req,req.body.acno, req.body.password, req.body.amt)
+    .then(result=>{
+        res.status(result.statusCode).json(result)
+    })
 })
 app.post('/withDraw', jwtMiddleware, (req, res) => {
     console.log(req.body.acno);
