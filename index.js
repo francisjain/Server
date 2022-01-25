@@ -85,20 +85,24 @@ app.post('/login', (req, res) => {
 })
 
 app.post('/deposite', jwtMiddleware, (req, res) => {
-    console.log(req.body.acno);
-    dataService.deposite(req,req.body.acno, req.body.password, req.body.amt)
+    console.log(req.body);
+    dataService.deposite(req.body.acno, req.body.password, req.body.amt)
     .then(result=>{
         res.status(result.statusCode).json(result)
     })
 })
 app.post('/withDraw', jwtMiddleware, (req, res) => {
     console.log(req.body.acno);
-    const result = dataService.withDraw(req.body.acno, req.body.password, req.body.amt)
-    res.status(result.statusCode).json(result)
+    dataService.withDraw(req,req.body.acno, req.body.password, req.body.amt)
+    .then(result=>{
+        res.status(result.statusCode).json(result)
+    })
 })
 app.post('/getTransaction', jwtMiddleware, (req, res) => {
     const result = dataService.getTransaction(req)
-    res.status(result.statusCode).json(result)
+    .then(result=>{
+        res.status(result.statusCode).json(result)
+    })
 })
 //To set status code & set port number for server
 app.get('/', (req, res) => {
